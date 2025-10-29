@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulação Interativa de Campo Magnético</title>
     
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     
     <style>
@@ -20,6 +19,137 @@
         h1 {
             color: #333;
         }
+        
+        /* Avatar Container */
+        #avatar-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        #avatar {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            animation: float 3s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        #narration-box {
+            flex: 1;
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        #narration-box::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 15px solid transparent;
+            border-bottom: 15px solid transparent;
+            border-right: 15px solid rgba(255,255,255,0.95);
+        }
+        
+        #narration-text {
+            font-size: 16px;
+            color: #333;
+            line-height: 1.6;
+            margin: 0 0 15px 0;
+            min-height: 60px;
+        }
+        
+        #narration-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .control-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        #play-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        #play-btn:hover {
+            background: #45a049;
+        }
+        
+        #pause-btn {
+            background: #ff9800;
+            color: white;
+        }
+        
+        #pause-btn:hover {
+            background: #e68900;
+        }
+        
+        #restart-btn {
+            background: #2196F3;
+            color: white;
+        }
+        
+        #restart-btn:hover {
+            background: #0b7dda;
+        }
+        
+        #progress-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        #progress-fill {
+            height: 100%;
+            background: #667eea;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .speaking {
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
         #main-container {
             display: flex;
             gap: 20px;
@@ -109,21 +239,24 @@
 <body>
     
     <h1>Simulação Interativa de Campo Magnético</h1>
-    <p>Arraste os fios na tela para mudar a posição e use os controles para alterar a corrente elétrica.</p>
-    <!-- SIMULAÇÃO À ESQUERDA (TOPO) -->
-    <div class="simulation-container">
-
-        <!-- Botões de Navegação -->
-    <div id="navigation-buttons">
-        <a href="campo_eletrico.html" class="nav-button">
-            <span class="nav-icon">⚡</span>
-            <span class="nav-text">Campo Elétrico</span>
-        </a>
-        <a href="equipotenciais.html" class="nav-button">
-            <span class="nav-icon">🧲</span>
-            <span class="nav-text">Equipotenciais</span>
-        </a>
+    
+    <!-- Avatar Narrador -->
+    <div id="avatar-container">
+        <div id="avatar">👨‍🔬</div>
+        <div id="narration-box">
+            <p id="narration-text">Olá! Sou o Professor Magneto e vou guiá-lo nesta simulação interativa de campos magnéticos!</p>
+            <div id="narration-controls">
+                <button id="play-btn" class="control-btn">▶ Iniciar</button>
+                <button id="pause-btn" class="control-btn" style="display:none;">⏸ Pausar</button>
+                <button id="restart-btn" class="control-btn">↻ Reiniciar</button>
+                <div id="progress-bar">
+                    <div id="progress-fill"></div>
+                </div>
+            </div>
+        </div>
     </div>
+    
+    <p>Arraste os fios na tela para mudar a posição e use os controles para alterar a corrente elétrica.</p>
     
     <div id="main-container">
         <!-- Fluxograma Didático -->
@@ -205,23 +338,146 @@
     </div>
     
     <script>
+        // ===================================================================================
+        // SISTEMA DE NARRAÇÃO COM VOZ
+        // ===================================================================================
+        
+        const narrationScript = [
+            "Olá! Sou o Professor Magneto e vou guiá-lo nesta simulação interativa de campos magnéticos!",
+            "Nesta simulação, você verá como funciona o campo magnético gerado por fios condutores com corrente elétrica.",
+            "Observe os dois fios condutores na tela. O fio verde representa corrente saindo da tela, marcado com o símbolo de ponto. O fio laranja representa corrente entrando na tela, marcado com uma cruz.",
+            "As setas em magenta mostram o campo magnético resultante. Quanto mais forte o campo, mais intensa a cor das setas.",
+            "Você pode arrastar os fios clicando e movendo-os pela tela. Observe como o padrão do campo magnético muda conforme você move os fios!",
+            "Use os controles deslizantes abaixo da simulação para ajustar a intensidade da corrente elétrica em cada fio, de menos 5 até mais 5 ampères.",
+            "Quando a corrente é positiva, ela sai da tela. Quando é negativa, ela entra na tela. Experimente inverter as correntes e veja o que acontece!",
+            "O cálculo do campo magnético usa a Lei de Biot-Savart. Para cada ponto do espaço, calculamos a contribuição de cada fio e somamos os vetores.",
+            "A direção do campo magnético segue a regra da mão direita: aponte o polegar na direção da corrente e seus dedos curvados indicam o sentido do campo.",
+            "Agora é sua vez! Experimente mover os fios e alterar as correntes. Observe como campos magnéticos de mesmo sentido se repelem e de sentidos opostos se atraem.",
+            "Divirta-se explorando o fascinante mundo do eletromagnetismo! Se precisar ouvir a explicação novamente, clique em Reiniciar."
+        ];
+        
+        let currentNarrationIndex = 0;
+        let isNarrating = false;
+        let speechSynthesis = window.speechSynthesis;
+        let currentUtterance = null;
+        
+        function updateNarrationText(index) {
+            const narrationText = document.getElementById('narration-text');
+            const avatar = document.getElementById('avatar');
+            const progressFill = document.getElementById('progress-fill');
+            
+            if (index < narrationScript.length) {
+                narrationText.textContent = narrationScript[index];
+                avatar.classList.add('speaking');
+                
+                // Atualiza barra de progresso
+                const progress = ((index + 1) / narrationScript.length) * 100;
+                progressFill.style.width = progress + '%';
+                
+                // Síntese de voz
+                if (speechSynthesis) {
+                    // Cancela qualquer fala anterior
+                    speechSynthesis.cancel();
+                    
+                    currentUtterance = new SpeechSynthesisUtterance(narrationScript[index]);
+                    currentUtterance.lang = 'pt-BR';
+                    currentUtterance.rate = 0.85; // Velocidade confortável
+                    currentUtterance.pitch = 1.0;
+                    
+                    // Tenta usar voz masculina em português
+                    const voices = speechSynthesis.getVoices();
+                    const ptVoice = voices.find(voice => 
+                        voice.lang.startsWith('pt') && 
+                        (voice.name.includes('Male') || voice.name.includes('Masculino') || !voice.name.includes('Female'))
+                    ) || voices.find(voice => voice.lang.startsWith('pt'));
+                    
+                    if (ptVoice) {
+                        currentUtterance.voice = ptVoice;
+                    }
+                    
+                    // Quando terminar de falar, aguarda 1 segundo e passa para a próxima
+                    currentUtterance.onend = function() {
+                        avatar.classList.remove('speaking');
+                        
+                        if (isNarrating && currentNarrationIndex < narrationScript.length - 1) {
+                            setTimeout(() => {
+                                if (isNarrating) {
+                                    currentNarrationIndex++;
+                                    updateNarrationText(currentNarrationIndex);
+                                }
+                            }, 1000); // 1 segundo de pausa entre falas
+                        } else {
+                            stopNarration();
+                        }
+                    };
+                    
+                    speechSynthesis.speak(currentUtterance);
+                }
+            } else {
+                avatar.classList.remove('speaking');
+                stopNarration();
+            }
+        }
+        
+        function startNarration() {
+            if (isNarrating) return;
+            
+            isNarrating = true;
+            document.getElementById('play-btn').style.display = 'none';
+            document.getElementById('pause-btn').style.display = 'inline-block';
+            
+            updateNarrationText(currentNarrationIndex);
+        }
+        
+        function pauseNarration() {
+            isNarrating = false;
+            if (speechSynthesis) {
+                speechSynthesis.cancel();
+            }
+            document.getElementById('avatar').classList.remove('speaking');
+            document.getElementById('play-btn').style.display = 'inline-block';
+            document.getElementById('pause-btn').style.display = 'none';
+        }
+        
+        function stopNarration() {
+            pauseNarration();
+            document.getElementById('progress-fill').style.width = '100%';
+        }
+        
+        function restartNarration() {
+            pauseNarration();
+            currentNarrationIndex = 0;
+            document.getElementById('progress-fill').style.width = '0%';
+            updateNarrationText(0);
+            setTimeout(() => startNarration(), 500);
+        }
+        
+        // Event Listeners
+        document.getElementById('play-btn').addEventListener('click', startNarration);
+        document.getElementById('pause-btn').addEventListener('click', pauseNarration);
+        document.getElementById('restart-btn').addEventListener('click', restartNarration);
+        
+        // Carrega vozes quando disponíveis
+        if (speechSynthesis) {
+            speechSynthesis.onvoiceschanged = function() {
+                speechSynthesis.getVoices();
+            };
+        }
         
         // ===================================================================================
         // VARIÁVEIS DE SIMULAÇÃO E FUNÇÕES BÁSICAS
         // ===================================================================================
         
-        // Constantes e Configurações
         const CANVAS_SIZE = 600;
-        const GRID_DENSITY = 25; // Número de vetores a serem exibidos em cada direção
-        const MU_0_SCALE = 3000; // Constante de escala para visualização (μ₀/2π ajustado)
+        const GRID_DENSITY = 25;
+        const MU_0_SCALE = 3000;
         
         let wires = [];
-        let selectedWire = null; // Fio que está sendo arrastado
+        let selectedWire = null;
 
-        // Estrutura de Fio Condutor
         class Wire {
             constructor(I, x, y, name) {
-                this.I = I; // Corrente elétrica
+                this.I = I;
                 this.x = x;
                 this.y = y;
                 this.name = name;
@@ -229,36 +485,22 @@
             }
         }
         
-        // Função de Cálculo do Campo Magnético (Lei de Biot-Savart para fio infinito)
         function calculateMagneticField(r, wires) {
             let Bx = 0;
             let By = 0;
 
             for (let wire of wires) {
-                // Vetor da posição do fio até o ponto r
                 let Rx = r.x - wire.x;
                 let Ry = r.y - wire.y;
-                
-                // Distância ao quadrado
                 let r_squared = Rx * Rx + Ry * Ry;
                 
-                // Evita divisão por zero
                 const MIN_DISTANCE_SQUARED = 100;
                 if (r_squared < MIN_DISTANCE_SQUARED) {
                     continue;
                 }
 
-                // Distância |R|
                 let r_mag = Math.sqrt(r_squared);
-                
-                // Campo magnético: B = (μ₀·I)/(2π·r)
-                // Direção: perpendicular ao vetor R (regra da mão direita)
                 let B_mag = MU_0_SCALE * wire.I / r_mag;
-
-                // Direção perpendicular (rotação de 90° no plano)
-                // Se I > 0 (saindo), campo gira no sentido anti-horário
-                // Se I < 0 (entrando), campo gira no sentido horário
-                // Perpendicular de (Rx, Ry) é (-Ry, Rx) para rotação anti-horária
                 let perp_x = -Ry / r_mag;
                 let perp_y = Rx / r_mag;
 
@@ -269,74 +511,49 @@
             return createVector(Bx, By);
         }
         
-        // ===================================================================================
-        // FUNÇÕES P5.JS (SETUP E LOOP DE DESENHO)
-        // ===================================================================================
-        
         function setup() {
-            // Cria o canvas da simulação
             let canvas = createCanvas(CANVAS_SIZE, CANVAS_SIZE);
             canvas.parent('simulation-container');
-            
-            // Conecta os eventos do mouse para arrastar
             canvas.mousePressed(onMousePressed);
             canvas.mouseReleased(onMouseReleased);
 
-            // Inicializa os fios condutores
             wires.push(new Wire(2.0, CANVAS_SIZE * 0.3, CANVAS_SIZE * 0.5, "I1"));
             wires.push(new Wire(-2.0, CANVAS_SIZE * 0.7, CANVAS_SIZE * 0.5, "I2"));
 
-            // Conecta os sliders
             document.getElementById('slider_i1').oninput = updateWireCurrent;
             document.getElementById('slider_i2').oninput = updateWireCurrent;
-            
-            // Exibe os valores iniciais
             updateWireCurrent();
-            
-            console.log("Setup da Simulação concluído.");
         }
 
         function draw() {
             background(255);
 
-            // 1. Atualiza a posição do fio arrastado
             if (selectedWire) {
                 selectedWire.x = mouseX;
                 selectedWire.y = mouseY;
             }
             
-            // 2. Desenha o Campo Magnético
             drawMagneticField();
-
-            // 3. Desenha os Fios
             drawWires();
         }
 
         function drawMagneticField() {
-            // Itera sobre a grade de pontos
             for (let i = 0; i < GRID_DENSITY; i++) {
                 for (let j = 0; j < GRID_DENSITY; j++) {
-                    // Mapeia a posição do grid para coordenadas do canvas
                     let x = map(i, 0, GRID_DENSITY - 1, 0, CANVAS_SIZE);
                     let y = map(j, 0, GRID_DENSITY - 1, 0, CANVAS_SIZE);
-                    
-                    // Calcula o campo B no ponto (x, y)
                     let r = createVector(x, y);
                     let B = calculateMagneticField(r, wires);
-                    
                     let B_mag = B.mag();
 
-                    // Mapeamento de Cor e Tamanho do Vetor
                     let color_scale = map(B_mag, 0, 5, 100, 255);
-                    stroke(color_scale, 0, color_scale, 180); // Cor magenta
+                    stroke(color_scale, 0, color_scale, 180);
                     strokeWeight(1.5);
                     
-                    // Normaliza B e ajusta o comprimento visual
-                    if (B_mag > 0.01) { // Só desenha se o campo for significativo
+                    if (B_mag > 0.01) {
                         B.normalize();
                         let arrow_length = 20;
 
-                        // Desenha o vetor (seta)
                         push();
                         translate(x, y);
                         rotate(B.heading());
@@ -351,36 +568,30 @@
         
         function drawWires() {
             for (let wire of wires) {
-                // Cor baseada no sentido da corrente
                 if (wire.I > 0) {
-                    fill(0, 200, 0, 220); // Verde para corrente saindo (⊙)
+                    fill(0, 200, 0, 220);
                     stroke(0, 100, 0);
                 } else if (wire.I < 0) {
-                    fill(255, 140, 0, 220); // Laranja para corrente entrando (⊗)
+                    fill(255, 140, 0, 220);
                     stroke(200, 100, 0);
                 } else {
-                    fill(150); // Cinza para corrente nula
+                    fill(150);
                     stroke(100);
                 }
                 
-                // Raio proporcional à magnitude da corrente
                 wire.radius = 15 + 5 * Math.abs(wire.I);
-
-                // Desenha o círculo
                 strokeWeight(3);
                 ellipse(wire.x, wire.y, wire.radius * 2);
 
-                // Símbolo no centro (⊙ ou ⊗)
                 fill(255);
                 textAlign(CENTER, CENTER);
                 textSize(20);
                 if (wire.I > 0) {
-                    text("⊙", wire.x, wire.y - 2); // Ponto = saindo
+                    text("⊙", wire.x, wire.y - 2);
                 } else if (wire.I < 0) {
-                    text("⊗", wire.x, wire.y - 2); // Cruz = entrando
+                    text("⊗", wire.x, wire.y - 2);
                 }
 
-                // Nome e valor da corrente
                 fill(0);
                 textSize(11);
                 text(wire.name, wire.x, wire.y + wire.radius + 12);
@@ -388,12 +599,7 @@
             }
         }
 
-        // ===================================================================================
-        // FUNÇÕES DE INTERATIVIDADE (Callbacks)
-        // ===================================================================================
-
         function onMousePressed() {
-            // Verifica se clicou em algum fio
             for (let wire of wires) {
                 let d = dist(mouseX, mouseY, wire.x, wire.y);
                 if (d < wire.radius) {
@@ -411,11 +617,9 @@
             const slider1 = document.getElementById('slider_i1');
             const slider2 = document.getElementById('slider_i2');
             
-            // Atualiza as variáveis da simulação
             wires[0].I = parseFloat(slider1.value);
             wires[1].I = parseFloat(slider2.value);
 
-            // Atualiza os displays
             document.getElementById('i1_display').innerText = wires[0].I.toFixed(1);
             document.getElementById('i2_display').innerText = wires[1].I.toFixed(1);
         }
