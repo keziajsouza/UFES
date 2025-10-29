@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação Interativa de Campo Magnético</title>
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f9;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #main-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            align-items: flex-start;
+        }
+        #flowchart {
+            width: 350px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        #flowchart h2 {
+            color: #9c27b0;
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+        .flow-step {
+            margin: 15px 0;
+            padding: 12px;
+            border-left: 4px solid #9c27b0;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .flow-step h3 {
+            margin: 0 0 8px 0;
+            color: #9c27b0;
+            font-size: 1em;
+        }
+        .flow-step p {
+            margin: 0;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        .formula {
+            background-color: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin: 8px 0;
+            font-size: 0.85em;
+        }
+        .arrow {
+            text-align: center;
+            color: #9c27b0;
+            font-size: 1.5em;
+            margin: 5px 0;
+        }
+        #simulation-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        #controls {
+            margin-top: 20px;
+            width: 600px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .current-value {
+            font-weight: bold;
+            color: #9c27b0;
+        }
+        .info-box {
+            background-color: #e1bee7;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    
+    <h1>Simulação Interativa de Campo Magnético</h1>
+    <p>Arraste os fios na tela para mudar a posição e use os controles para alterar a corrente elétrica.</p>
+    <!-- SIMULAÇÃO À ESQUERDA (TOPO) -->
+    <div class="simulation-container">
+
+        <!-- Botões de Navegação -->
+    <div id="navigation-buttons">
+        <a href="campo_eletrico.html" class="nav-button">
+            <span class="nav-icon">⚡</span>
+            <span class="nav-text">Campo Elétrico</span>
+        </a>
+        <a href="equipotenciais.html" class="nav-button">
+            <span class="nav-icon">🧲</span>
+            <span class="nav-text">Equipotenciais</span>
+        </a>
+    </div>
+    
+    <div id="main-container">
+        <!-- Fluxograma Didático -->
+        <div id="flowchart">
+            <h2>🧲 Como Funciona a Simulação</h2>
+            
+            <div class="flow-step">
+                <h3>1️⃣ Inicialização</h3>
+                <p>Sistema cria dois fios condutores com correntes elétricas em posições iniciais</p>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <h3>2️⃣ Interação do Usuário</h3>
+                <p><strong>Arrastar:</strong> Clique e arraste os fios para mudar posição</p>
+                <p><strong>Sliders:</strong> Ajuste a corrente elétrica (-5A a +5A)</p>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <h3>3️⃣ Cálculo do Campo</h3>
+                <p>Para cada ponto da grade (25×25 pontos):</p>
+                <div class="formula">
+                    B⃗ = Σ (μ₀·I / 2π·r) · θ̂
+                </div>
+                <p style="font-size: 0.85em; color: #666;">
+                    <strong>Lei de Biot-Savart (fio infinito)</strong><br>
+                    <strong>r:</strong> distância ao fio<br>
+                    <strong>I:</strong> corrente elétrica<br>
+                    <strong>θ̂:</strong> direção tangencial (regra da mão direita)
+                </p>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <h3>4️⃣ Visualização</h3>
+                <p><strong>Vetores:</strong> Setas mostram direção e intensidade do campo</p>
+                <p><strong>Cor das setas:</strong> Magenta = campo mais forte</p>
+                <p><strong>Fios:</strong> Verde (corrente saindo ⊙) / Laranja (corrente entrando ⊗)</p>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <h3>5️⃣ Atualização Contínua</h3>
+                <p>O sistema recalcula tudo 60 vezes por segundo, criando uma animação fluida e responsiva</p>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 Regra da Mão Direita:</strong><br>
+                Polegar = direção da corrente<br>
+                Dedos curvados = sentido do campo magnético
+            </div>
+        </div>
+
+        <!-- Simulação e Controles -->
+        <div>
+            <div id="simulation-container"></div>
+            
+            <div id="controls">
+                <h2>Controles dos Fios Condutores</h2>
+                
+                <div class="control-group">
+                    <label for="slider_i1">Corrente I1 (A): <span id="i1_display" class="current-value">2.0</span></label>
+                    <input type="range" id="slider_i1" min="-5" max="5" step="0.1" value="2.0">
+                    <small>Positivo = corrente saindo da tela (⊙) | Negativo = corrente entrando na tela (⊗)</small>
+                </div>
+
+                <div class="control-group">
+                    <label for="slider_i2">Corrente I2 (A): <span id="i2_display" class="current-value">-2.0</span></label>
+                    <input type="range" id="slider_i2" min="-5" max="5" step="0.1" value="-2.0">
+                    <small>Positivo = corrente saindo da tela (⊙) | Negativo = corrente entrando na tela (⊗)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        
+        // ===================================================================================
+        // VARIÁVEIS DE SIMULAÇÃO E FUNÇÕES BÁSICAS
+        // ===================================================================================
+        
+        // Constantes e Configurações
+        const CANVAS_SIZE = 600;
+        const GRID_DENSITY = 25; // Número de vetores a serem exibidos em cada direção
+        const MU_0_SCALE = 3000; // Constante de escala para visualização (μ₀/2π ajustado)
+        
+        let wires = [];
+        let selectedWire = null; // Fio que está sendo arrastado
+
+        // Estrutura de Fio Condutor
+        class Wire {
+            constructor(I, x, y, name) {
+                this.I = I; // Corrente elétrica
+                this.x = x;
+                this.y = y;
+                this.name = name;
+                this.radius = 15;
+            }
+        }
+        
+        // Função de Cálculo do Campo Magnético (Lei de Biot-Savart para fio infinito)
+        function calculateMagneticField(r, wires) {
+            let Bx = 0;
+            let By = 0;
+
+            for (let wire of wires) {
+                // Vetor da posição do fio até o ponto r
+                let Rx = r.x - wire.x;
+                let Ry = r.y - wire.y;
+                
+                // Distância ao quadrado
+                let r_squared = Rx * Rx + Ry * Ry;
+                
+                // Evita divisão por zero
+                const MIN_DISTANCE_SQUARED = 100;
+                if (r_squared < MIN_DISTANCE_SQUARED) {
+                    continue;
+                }
+
+                // Distância |R|
+                let r_mag = Math.sqrt(r_squared);
+                
+                // Campo magnético: B = (μ₀·I)/(2π·r)
+                // Direção: perpendicular ao vetor R (regra da mão direita)
+                let B_mag = MU_0_SCALE * wire.I / r_mag;
+
+                // Direção perpendicular (rotação de 90° no plano)
+                // Se I > 0 (saindo), campo gira no sentido anti-horário
+                // Se I < 0 (entrando), campo gira no sentido horário
+                // Perpendicular de (Rx, Ry) é (-Ry, Rx) para rotação anti-horária
+                let perp_x = -Ry / r_mag;
+                let perp_y = Rx / r_mag;
+
+                Bx += B_mag * perp_x;
+                By += B_mag * perp_y;
+            }
+
+            return createVector(Bx, By);
+        }
+        
+        // ===================================================================================
+        // FUNÇÕES P5.JS (SETUP E LOOP DE DESENHO)
+        // ===================================================================================
+        
+        function setup() {
+            // Cria o canvas da simulação
+            let canvas = createCanvas(CANVAS_SIZE, CANVAS_SIZE);
+            canvas.parent('simulation-container');
+            
+            // Conecta os eventos do mouse para arrastar
+            canvas.mousePressed(onMousePressed);
+            canvas.mouseReleased(onMouseReleased);
+
+            // Inicializa os fios condutores
+            wires.push(new Wire(2.0, CANVAS_SIZE * 0.3, CANVAS_SIZE * 0.5, "I1"));
+            wires.push(new Wire(-2.0, CANVAS_SIZE * 0.7, CANVAS_SIZE * 0.5, "I2"));
+
+            // Conecta os sliders
+            document.getElementById('slider_i1').oninput = updateWireCurrent;
+            document.getElementById('slider_i2').oninput = updateWireCurrent;
+            
+            // Exibe os valores iniciais
+            updateWireCurrent();
+            
+            console.log("Setup da Simulação concluído.");
+        }
+
+        function draw() {
+            background(255);
+
+            // 1. Atualiza a posição do fio arrastado
+            if (selectedWire) {
+                selectedWire.x = mouseX;
+                selectedWire.y = mouseY;
+            }
+            
+            // 2. Desenha o Campo Magnético
+            drawMagneticField();
+
+            // 3. Desenha os Fios
+            drawWires();
+        }
+
+        function drawMagneticField() {
+            // Itera sobre a grade de pontos
+            for (let i = 0; i < GRID_DENSITY; i++) {
+                for (let j = 0; j < GRID_DENSITY; j++) {
+                    // Mapeia a posição do grid para coordenadas do canvas
+                    let x = map(i, 0, GRID_DENSITY - 1, 0, CANVAS_SIZE);
+                    let y = map(j, 0, GRID_DENSITY - 1, 0, CANVAS_SIZE);
+                    
+                    // Calcula o campo B no ponto (x, y)
+                    let r = createVector(x, y);
+                    let B = calculateMagneticField(r, wires);
+                    
+                    let B_mag = B.mag();
+
+                    // Mapeamento de Cor e Tamanho do Vetor
+                    let color_scale = map(B_mag, 0, 5, 100, 255);
+                    stroke(color_scale, 0, color_scale, 180); // Cor magenta
+                    strokeWeight(1.5);
+                    
+                    // Normaliza B e ajusta o comprimento visual
+                    if (B_mag > 0.01) { // Só desenha se o campo for significativo
+                        B.normalize();
+                        let arrow_length = 20;
+
+                        // Desenha o vetor (seta)
+                        push();
+                        translate(x, y);
+                        rotate(B.heading());
+                        line(0, 0, arrow_length, 0);
+                        line(arrow_length, 0, arrow_length - 5, -3);
+                        line(arrow_length, 0, arrow_length - 5, 3);
+                        pop();
+                    }
+                }
+            }
+        }
+        
+        function drawWires() {
+            for (let wire of wires) {
+                // Cor baseada no sentido da corrente
+                if (wire.I > 0) {
+                    fill(0, 200, 0, 220); // Verde para corrente saindo (⊙)
+                    stroke(0, 100, 0);
+                } else if (wire.I < 0) {
+                    fill(255, 140, 0, 220); // Laranja para corrente entrando (⊗)
+                    stroke(200, 100, 0);
+                } else {
+                    fill(150); // Cinza para corrente nula
+                    stroke(100);
+                }
+                
+                // Raio proporcional à magnitude da corrente
+                wire.radius = 15 + 5 * Math.abs(wire.I);
+
+                // Desenha o círculo
+                strokeWeight(3);
+                ellipse(wire.x, wire.y, wire.radius * 2);
+
+                // Símbolo no centro (⊙ ou ⊗)
+                fill(255);
+                textAlign(CENTER, CENTER);
+                textSize(20);
+                if (wire.I > 0) {
+                    text("⊙", wire.x, wire.y - 2); // Ponto = saindo
+                } else if (wire.I < 0) {
+                    text("⊗", wire.x, wire.y - 2); // Cruz = entrando
+                }
+
+                // Nome e valor da corrente
+                fill(0);
+                textSize(11);
+                text(wire.name, wire.x, wire.y + wire.radius + 12);
+                text(wire.I.toFixed(1) + "A", wire.x, wire.y + wire.radius + 25);
+            }
+        }
+
+        // ===================================================================================
+        // FUNÇÕES DE INTERATIVIDADE (Callbacks)
+        // ===================================================================================
+
+        function onMousePressed() {
+            // Verifica se clicou em algum fio
+            for (let wire of wires) {
+                let d = dist(mouseX, mouseY, wire.x, wire.y);
+                if (d < wire.radius) {
+                    selectedWire = wire;
+                    break;
+                }
+            }
+        }
+
+        function onMouseReleased() {
+            selectedWire = null;
+        }
+
+        function updateWireCurrent() {
+            const slider1 = document.getElementById('slider_i1');
+            const slider2 = document.getElementById('slider_i2');
+            
+            // Atualiza as variáveis da simulação
+            wires[0].I = parseFloat(slider1.value);
+            wires[1].I = parseFloat(slider2.value);
+
+            // Atualiza os displays
+            document.getElementById('i1_display').innerText = wires[0].I.toFixed(1);
+            document.getElementById('i2_display').innerText = wires[1].I.toFixed(1);
+        }
+
+    </script>
+</body>
+</html>
