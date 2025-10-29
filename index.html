@@ -25,6 +25,168 @@
             margin-top: 20px;
             align-items: flex-start;
         }
+        
+        /* Estilos do Avatar */
+        #avatar-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            overflow: hidden;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        #avatar-header {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #avatar-face {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        #avatar-name {
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        #avatar-body {
+            padding: 20px;
+            background: white;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        #speech-bubble {
+            position: relative;
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        #speech-bubble:before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid #f0f0f0;
+        }
+        
+        .typing-indicator {
+            display: inline-block;
+            animation: blink 1.4s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        #avatar-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .avatar-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        #play-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        #play-btn:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+        
+        #pause-btn {
+            background: #ff9800;
+            color: white;
+        }
+        
+        #pause-btn:hover {
+            background: #e68900;
+            transform: scale(1.05);
+        }
+        
+        #restart-btn {
+            background: #2196F3;
+            color: white;
+        }
+        
+        #restart-btn:hover {
+            background: #0b7dda;
+            transform: scale(1.05);
+        }
+        
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .speaking {
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        #volume-control {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #volume-slider {
+            flex: 1;
+        }
+        
+        .volume-icon {
+            font-size: 1.2em;
+        }
+        
         #flowchart {
             width: 350px;
             padding: 20px;
@@ -103,6 +265,29 @@
     <h1>Simulação Interativa de Campo Elétrico</h1>
     <p>Arraste as cargas na tela para mudar a posição e use os controles para alterar a magnitude.</p>
 
+    <!-- Avatar Explicativo -->
+    <div id="avatar-container">
+        <div id="avatar-header">
+            <div id="avatar-face">🤔</div>
+            <div id="avatar-name">Prof. Elétron</div>
+        </div>
+        <div id="avatar-body">
+            <div id="speech-bubble">
+                Olá! Clique em "Iniciar" para eu te explicar como funciona esta simulação!
+            </div>
+            <div id="avatar-controls">
+                <button id="play-btn" class="avatar-btn">▶️ Iniciar</button>
+                <button id="pause-btn" class="avatar-btn" style="display:none;">⏸️ Pausar</button>
+                <button id="restart-btn" class="avatar-btn">🔄 Reiniciar</button>
+            </div>
+            <div id="volume-control">
+                <span class="volume-icon">🔊</span>
+                <input type="range" id="volume-slider" min="0" max="100" value="80" title="Volume da narração">
+                <span id="volume-value">80%</span>
+            </div>
+        </div>
+    </div>
+
     <div id="main-container">
         <!-- Fluxograma Didático -->
         <div id="flowchart">
@@ -176,16 +361,238 @@
     <script>
         
         // ===================================================================================
+        // SISTEMA DE AVATAR EXPLICATIVO COM NARRAÇÃO POR VOZ
+        // ===================================================================================
+        
+        // Configuração de voz
+        let speechSynthesis = window.speechSynthesis;
+        let currentUtterance = null;
+        let voiceVolume = 0.8;
+        
+        const avatarScript = [
+            {
+                text: "👋 Olá! Eu sou o Professor Elétron e vou te guiar por esta simulação de <span class='highlight'>campo elétrico</span>!",
+                speech: "Olá! Eu sou o Professor Elétron e vou te guiar por esta simulação de campo elétrico!",
+                emoji: "🤔"
+            },
+            {
+                text: "Veja estas duas cargas na tela: a <span class='highlight'>vermelha é positiva</span> (+) e a <span class='highlight'>azul é negativa</span> (-). Elas criam um campo elétrico ao seu redor!",
+                speech: "Veja estas duas cargas na tela: a vermelha é positiva, e a azul é negativa. Elas criam um campo elétrico ao seu redor!",
+                emoji: "⚡"
+            },
+            {
+                text: "As <span class='highlight'>setinhas</span> que você vê representam a direção e intensidade do campo elétrico em cada ponto do espaço. Quanto mais escuras, mais forte é o campo!",
+                speech: "As setinhas que você vê representam a direção e intensidade do campo elétrico em cada ponto do espaço. Quanto mais escuras, mais forte é o campo!",
+                emoji: "➡️"
+            },
+            {
+                text: "Agora tente <span class='highlight'>arrastar uma carga</span> com o mouse! Veja como o campo se reorganiza instantaneamente. A física está acontecendo em tempo real!",
+                speech: "Agora tente arrastar uma carga com o mouse! Veja como o campo se reorganiza instantaneamente. A física está acontecendo em tempo real!",
+                emoji: "👆"
+            },
+            {
+                text: "Use os <span class='highlight'>controles deslizantes</span> abaixo para mudar a magnitude das cargas. Você pode torná-las mais fortes ou até inverter seus sinais!",
+                speech: "Use os controles deslizantes abaixo para mudar a magnitude das cargas. Você pode torná-las mais fortes ou até inverter seus sinais!",
+                emoji: "🎚️"
+            },
+            {
+                text: "Por trás dos panos, o sistema está calculando a <span class='highlight'>Lei de Coulomb</span>: E = k·q·R/|R|³ para cada ponto, 60 vezes por segundo!",
+                speech: "Por trás dos panos, o sistema está calculando a Lei de Coulomb para cada ponto, 60 vezes por segundo!",
+                emoji: "🧮"
+            },
+            {
+                text: "Experimente aproximar as cargas ou colocá-las com o mesmo sinal. O que acontece com o campo? A física é linda, não é? 🌟",
+                speech: "Experimente aproximar as cargas ou colocá-las com o mesmo sinal. O que acontece com o campo? A física é linda, não é?",
+                emoji: "🔬"
+            },
+            {
+                text: "Continue explorando! Use o botão 'Reiniciar' se quiser ouvir a explicação novamente. Divirta-se aprendendo! 🎓",
+                speech: "Continue explorando! Use o botão Reiniciar se quiser ouvir a explicação novamente. Divirta-se aprendendo!",
+                emoji: "✨"
+            }
+        ];
+        
+        let currentStep = 0;
+        let isPlaying = false;
+        let voicesLoaded = false;
+        
+        // Função para selecionar voz masculina em português
+        function getPortugueseVoice() {
+            const voices = speechSynthesis.getVoices();
+            
+            // Prioriza vozes masculinas em português do Brasil
+            let voice = voices.find(v => 
+                v.lang.includes('pt-BR') && 
+                (v.name.includes('Male') || v.name.includes('Masculine') || v.name.includes('Luciano'))
+            );
+            
+            // Se não encontrar masculina, usa qualquer voz em português do Brasil
+            if (!voice) {
+                voice = voices.find(v => v.lang.includes('pt-BR'));
+            }
+            
+            // Se não encontrar pt-BR, usa qualquer português
+            if (!voice) {
+                voice = voices.find(v => v.lang.includes('pt'));
+            }
+            
+            // Se não encontrar nenhuma, usa a padrão
+            return voice || voices[0];
+        }
+        
+        // Função para falar o texto e aguardar o término + 2 segundos
+        function speak(text, callback) {
+            // Cancela qualquer fala anterior
+            if (currentUtterance) {
+                speechSynthesis.cancel();
+            }
+            
+            // Cria nova instância de fala
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            
+            // Configura a voz
+            const voice = getPortugueseVoice();
+            if (voice) {
+                currentUtterance.voice = voice;
+            }
+            currentUtterance.lang = 'pt-BR';
+            currentUtterance.rate = 0.95;
+            currentUtterance.pitch = 0.9;
+            currentUtterance.volume = voiceVolume;
+            
+            // Adiciona animação visual enquanto fala
+            const face = document.getElementById('avatar-face');
+            
+            currentUtterance.onstart = () => {
+                face.classList.add('speaking');
+            };
+            
+            currentUtterance.onend = () => {
+                face.classList.remove('speaking');
+                // Aguarda 2 segundos após terminar antes de chamar o callback
+                if (callback && isPlaying) {
+                    setTimeout(callback, 2000);
+                }
+            };
+            
+            currentUtterance.onerror = (event) => {
+                console.error('Erro na síntese de voz:', event);
+                face.classList.remove('speaking');
+                // Mesmo com erro, continua após 2 segundos
+                if (callback && isPlaying) {
+                    setTimeout(callback, 2000);
+                }
+            };
+            
+            // Fala o texto
+            speechSynthesis.speak(currentUtterance);
+        }
+        
+        function updateAvatarSpeech(step) {
+            if (!isPlaying || step >= avatarScript.length) {
+                // Fim da explicação
+                isPlaying = false;
+                document.getElementById('play-btn').style.display = 'inline-block';
+                document.getElementById('pause-btn').style.display = 'none';
+                return;
+            }
+            
+            const bubble = document.getElementById('speech-bubble');
+            const face = document.getElementById('avatar-face');
+            const scriptItem = avatarScript[step];
+            
+            // Atualiza o emoji do avatar
+            face.textContent = scriptItem.emoji;
+            
+            // Efeito de digitação
+            bubble.innerHTML = '<span class="typing-indicator">Digitando...</span>';
+            
+            setTimeout(() => {
+                bubble.innerHTML = scriptItem.text;
+                
+                // Narra o texto e, quando terminar (+ 2s), vai para o próximo passo
+                speak(scriptItem.speech, () => {
+                    if (isPlaying) {
+                        currentStep++;
+                        updateAvatarSpeech(currentStep);
+                    }
+                });
+            }, 500);
+        }
+        
+        function startAvatar() {
+            if (!isPlaying) {
+                isPlaying = true;
+                document.getElementById('play-btn').style.display = 'none';
+                document.getElementById('pause-btn').style.display = 'inline-block';
+                updateAvatarSpeech(currentStep);
+            }
+        }
+        
+        function pauseAvatar() {
+            isPlaying = false;
+            // Para a narração
+            speechSynthesis.cancel();
+            document.getElementById('avatar-face').classList.remove('speaking');
+            document.getElementById('play-btn').style.display = 'inline-block';
+            document.getElementById('pause-btn').style.display = 'none';
+        }
+        
+        function restartAvatar() {
+            pauseAvatar();
+            currentStep = 0;
+            const bubble = document.getElementById('speech-bubble');
+            bubble.innerHTML = "Olá! Clique em 'Iniciar' para eu te explicar como funciona esta simulação!";
+            document.getElementById('avatar-face').textContent = "🤔";
+        }
+        
+        // Controle de volume
+        function updateVolume() {
+            const slider = document.getElementById('volume-slider');
+            voiceVolume = slider.value / 100;
+            document.getElementById('volume-value').textContent = slider.value + '%';
+            
+            // Atualiza volume da narração atual se estiver falando
+            if (currentUtterance && speechSynthesis.speaking) {
+                // Não é possível alterar o volume em tempo real,
+                // mas será aplicado na próxima fala
+            }
+        }
+        
+        // Event Listeners do Avatar
+        document.addEventListener('DOMContentLoaded', () => {
+            // Carrega as vozes disponíveis
+            function loadVoices() {
+                const voices = speechSynthesis.getVoices();
+                if (voices.length > 0) {
+                    voicesLoaded = true;
+                    console.log('Vozes carregadas:', voices.length);
+                }
+            }
+            
+            // Alguns navegadores precisam esperar o evento
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = loadVoices;
+            }
+            loadVoices(); // Tenta carregar imediatamente também
+            
+            document.getElementById('play-btn').addEventListener('click', startAvatar);
+            document.getElementById('pause-btn').addEventListener('click', pauseAvatar);
+            document.getElementById('restart-btn').addEventListener('click', restartAvatar);
+            document.getElementById('volume-slider').addEventListener('input', updateVolume);
+        });
+        
+        // ===================================================================================
         // VARIÁVEIS DE SIMULAÇÃO E FUNÇÕES BÁSICAS
         // ===================================================================================
         
         // Constantes e Configurações
         const CANVAS_SIZE = 600;
-        const GRID_DENSITY = 25; // Número de vetores a serem exibidos em cada direção
-        const K_COULOMB_SCALE = 5000; // Constante de escala para visualização em pixels
+        const GRID_DENSITY = 25;
+        const K_COULOMB_SCALE = 5000;
         
         let charges = [];
-        let selectedCharge = null; // Carga que está sendo arrastada (Item 1)
+        let selectedCharge = null;
 
         // Estrutura de Carga
         class Charge {
@@ -198,29 +605,24 @@
             }
         }
         
-        // Função de Cálculo do Campo Elétrico (A lógica física reescrita em JS)
+        // Função de Cálculo do Campo Elétrico
         function calculateElectricField(r, charges) {
             let Ex = 0;
             let Ey = 0;
 
             for (let charge of charges) {
-                // Vetor Deslocamento R = r - r_charge
                 let Rx = r.x - charge.x;
                 let Ry = r.y - charge.y;
                 
-                // Distância ao Quadrado
                 let r_squared = Rx * Rx + Ry * Ry;
                 
-                // Evita divisão por zero
-                const MIN_DISTANCE_SQUARED = 100; // Raio de 10px (em pixels) para evitar singularidade
+                const MIN_DISTANCE_SQUARED = 100;
                 if (r_squared < MIN_DISTANCE_SQUARED) {
-                    continue; // Pula o cálculo se estiver muito perto da carga
+                    continue;
                 }
 
-                // Distância ao Cubo |R|^3 = (r_squared)^(3/2)
                 let r_mag_cubed = Math.pow(r_squared, 1.5);
                 
-                // E = k * q * R / |R|^3
                 let E_mag_component = K_COULOMB_SCALE * charge.q / r_mag_cubed;
 
                 Ex += E_mag_component * Rx;
@@ -235,118 +637,92 @@
         // ===================================================================================
         
         function setup() {
-            // Cria o canvas da simulação
             let canvas = createCanvas(CANVAS_SIZE, CANVAS_SIZE);
-            canvas.parent('simulation-container'); // Conecta ao div HTML
+            canvas.parent('simulation-container');
             
-            // Conecta os eventos do mouse para arrastar (Item 1)
             canvas.mousePressed(onMousePressed);
             canvas.mouseReleased(onMouseReleased);
 
-            // Inicializa as cargas (no centro do canvas)
             charges.push(new Charge(1.0, CANVAS_SIZE * 0.3, CANVAS_SIZE * 0.5, "q1"));
             charges.push(new Charge(-1.0, CANVAS_SIZE * 0.7, CANVAS_SIZE * 0.5, "q2"));
 
-            // Conecta os sliders (Item 2)
             document.getElementById('slider_q1').oninput = updateChargeQ;
             document.getElementById('slider_q2').oninput = updateChargeQ;
             
-            // Exibe os valores iniciais
             updateChargeQ();
             
             console.log("Setup da Simulação concluído.");
         }
 
         function draw() {
-            // Este loop é chamado 60 vezes por segundo (FPS) e garante o Item 3
-            background(255); // Limpa o fundo
+            background(255);
 
-            // 1. Atualiza a posição da carga arrastada (Item 1)
             if (selectedCharge) {
                 selectedCharge.x = mouseX;
                 selectedCharge.y = mouseY;
             }
             
-            // 2. Desenha o Campo Elétrico (Item 3)
             drawElectricField();
-
-            // 3. Desenha as Cargas
             drawCharges();
         }
 
         function drawElectricField() {
-            // Verifica se as cargas têm o mesmo sinal
             let sameSign = (charges[0].q * charges[1].q) > 0;
             
-            // Itera sobre a grade de pontos
             for (let i = 0; i < GRID_DENSITY; i++) {
                 for (let j = 0; j < GRID_DENSITY; j++) {
-                    // Mapeia a posição do grid para coordenadas do canvas
                     let x = map(i, 0, GRID_DENSITY - 1, 0, CANVAS_SIZE);
                     let y = map(j, 0, GRID_DENSITY - 1, 0, CANVAS_SIZE);
                     
-                    // Se as cargas têm o mesmo sinal, evita desenhar vetores na região entre elas
                     if (sameSign) {
                         let midX = (charges[0].x + charges[1].x) / 2;
                         let midY = (charges[0].y + charges[1].y) / 2;
                         let distToMid = dist(x, y, midX, midY);
                         let chargesDistance = dist(charges[0].x, charges[0].y, charges[1].x, charges[1].y);
                         
-                        // Não desenha vetores muito próximos à linha que conecta as cargas
                         if (distToMid < chargesDistance * 0.15) {
                             continue;
                         }
                     }
                     
-                    // Calcula o campo E no ponto (x, y)
                     let r = createVector(x, y);
                     let E = calculateElectricField(r, charges);
                     
                     let E_mag = E.mag();
 
-                    // Mapeamento de Cor e Tamanho do Vetor
-                    // Cor: Mapeia a magnitude de E para uma cor (escala de 0 a 1)
                     let color_scale = map(E_mag, 0, 5, 0, 255); 
-                    // Setas mais fortes (E_mag maior) serão mais escuras
                     stroke(color_scale, 150); 
                     
-                    // Tamanho da Seta: Normaliza E e ajusta o comprimento visual
-                    // O campo é sempre recalculado em função da posição/carga (Item 3)
                     E.normalize();
                     let arrow_length = 20;
 
-                    // Desenha o vetor (seta)
-                    push(); // Salva o estado atual
-                    translate(x, y); // Move a origem para o ponto (x, y)
-                    rotate(E.heading()); // Rotaciona para a direção do vetor E
-                    line(0, 0, arrow_length, 0); // Desenha a linha
-                    line(arrow_length, 0, arrow_length - 5, -3); // Ponta da seta 1
-                    line(arrow_length, 0, arrow_length - 5, 3);  // Ponta da seta 2
-                    pop(); // Restaura o estado original
+                    push();
+                    translate(x, y);
+                    rotate(E.heading());
+                    line(0, 0, arrow_length, 0);
+                    line(arrow_length, 0, arrow_length - 5, -3);
+                    line(arrow_length, 0, arrow_length - 5, 3);
+                    pop();
                 }
             }
         }
         
         function drawCharges() {
             for (let charge of charges) {
-                // Cor e Raio (Item 3)
                 if (charge.q > 0) {
-                    fill(255, 0, 0, 200); // Vermelho para positivo
+                    fill(255, 0, 0, 200);
                 } else if (charge.q < 0) {
-                    fill(0, 0, 255, 200); // Azul para negativo
+                    fill(0, 0, 255, 200);
                 } else {
-                    fill(150); // Cinza para neutro
+                    fill(150);
                 }
                 
-                // Raio proporcional à magnitude
                 charge.radius = 10 + 5 * Math.abs(charge.q);
 
-                // Desenha o círculo
                 noStroke();
                 ellipse(charge.x, charge.y, charge.radius * 2);
 
-                // Texto (valor da carga)
-                fill(255); // Texto branco no centro
+                fill(255);
                 textAlign(CENTER, CENTER);
                 textSize(12);
                 text(charge.name, charge.x, charge.y - 5);
@@ -358,9 +734,7 @@
         // FUNÇÕES DE INTERATIVIDADE (Callbacks)
         // ===================================================================================
 
-        // Item 1: Eventos de Arrastar
         function onMousePressed() {
-            // Verifica se clicou em alguma carga
             for (let charge of charges) {
                 let d = dist(mouseX, mouseY, charge.x, charge.y);
                 if (d < charge.radius) {
@@ -371,25 +745,18 @@
         }
 
         function onMouseReleased() {
-            // Libera a carga (termina o arrasto)
             selectedCharge = null;
         }
 
-        // Item 2: Atualização dos Sliders
         function updateChargeQ() {
             const slider1 = document.getElementById('slider_q1');
             const slider2 = document.getElementById('slider_q2');
             
-            // 1. Atualiza as variáveis da simulação (JS)
             charges[0].q = parseFloat(slider1.value);
             charges[1].q = parseFloat(slider2.value);
 
-            // 2. Atualiza os displays (HTML)
             document.getElementById('q1_display').innerText = charges[0].q.toFixed(1);
             document.getElementById('q2_display').innerText = charges[1].q.toFixed(1);
-            
-            // Nota: Não é necessário chamar 'draw()' explicitamente, pois o loop 'draw'
-            // está rodando continuamente e já irá redesenhar o campo com os novos valores.
         }
 
     </script>
