@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Botões com Hyperlinks</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .btn-link {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+        
+        .btn-link:hover {
+            background: #1d4ed8;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5);
+        }
+        
+        .btn-link:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+        
+        .btn-link:nth-child(2) {
+            background: #3b82f6;
+        }
+        
+        .btn-link:nth-child(2):hover {
+            background: #2563eb;
+        }
+        
+        .btn-link:nth-child(3) {
+            background: #60a5fa;
+        }
+        
+        .btn-link:nth-child(3):hover {
+            background: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simulações</h1>
+        <div class="button-group">
+            <a href="campo_eletrico.html" class="btn-link" target="_blank">
+                Campo Elétrico
+            </a>
+            <a href="equipotenciais.html" class="btn-link" target="_blank">
+                Equipotenciais
+            </a>
+            <a href="campo_magnetico.html" class="btn-link" target="_blank">
+                Campo Magnético
+            </a>
+        </div>
+    </div>
+</body>
+</html>
