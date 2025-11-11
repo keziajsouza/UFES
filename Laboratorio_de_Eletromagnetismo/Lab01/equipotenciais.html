@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação - Cuba Eletrolítica</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 800px 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+            width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .simulation-container {
+            grid-column: 1;
+            grid-row: 1;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .flowchart-container {
+            grid-column: 2;
+            grid-row: 1;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            max-height: 600px;
+        }
+        
+        .flowchart-scroll {
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 10px;
+            flex: 1;
+        }
+        
+        .flowchart-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .flowchart-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .flowchart-scroll::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+        
+        .flowchart-scroll::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+        
+        .controls-container {
+            grid-column: 1 / 3;
+            grid-row: 2;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .flowchart-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        .flowchart-box.input {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .flowchart-box.process {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .flowchart-box.output {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        
+        .flowchart-arrow {
+            text-align: center;
+            font-size: 24px;
+            color: #667eea;
+            margin: 5px 0;
+        }
+        
+        .flowchart-note {
+            background: #f0f4ff;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #555;
+            border-left: 4px solid #667eea;
+            margin-top: 5px;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        h2 {
+            color: #667eea;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .info-box {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .charge-control {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .charge-control:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+        
+        .charge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .charge-label {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .charge-value {
+            font-family: 'Courier New', monospace;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #5568d3;
+            transform: scale(1.2);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #555;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .legend {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 13px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 10px;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        #simulationCanvas {
+            border-radius: 10px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+            
+            .simulation-container {
+                grid-column: 1;
+                grid-row: 1;
+            }
+            
+            .flowchart-container {
+                grid-column: 1;
+                grid-row: 2;
+            }
+            
+            .controls-container {
+                grid-column: 1;
+                grid-row: 3;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <!-- SIMULAÇÃO À ESQUERDA (TOPO) -->
+        <div class="simulation-container">
+            <!-- Botões de Navegação -->
+            <div id="navigation-buttons">
+                <a href="campo_eletrico.html" class="nav-button">
+                    <span class="nav-icon">⚡</span>
+                    <span class="nav-text">Campo Elétrico</span>
+                </a>
+                <a href="campo_magnetico.html" class="nav-button">
+                    <span class="nav-icon">🧲</span>
+                    <span class="nav-text">Campo Magnético</span>
+                </a>
+            </div>
+            <h1>⚡ Simulação de Cuba Eletrolítica</h1>
+            <div class="info-box">
+                <strong>Como usar:</strong> Arraste as cargas com o mouse para movê-las. Use os controles abaixo para ajustar os valores das cargas. As linhas equipotenciais se atualizam automaticamente.
+            </div>
+            <div id="canvasContainer"></div>
+        </div>
+        
+        
+        <!-- FLUXOGRAMA À DIREITA -->
+        <div class="flowchart-container">
+            <h2 style="margin-bottom: 15px;">🔬 Experimento: Cuba Eletrolítica</h2>
+            
+            <div class="flowchart-scroll">
+                <div class="flowchart-box input">
+                    🧪 MONTAGEM<br>
+                    Cuba com solução condutora
+                </div>
+                <div class="flowchart-note">
+                    Recipiente raso contendo água + sal ou sulfato de cobre (eletrólito) que conduz corrente elétrica
+                </div>
+                
+                <div class="flowchart-arrow">↓</div>
+                
+                <div class="flowchart-box input">
+                    ⚡ ELETRODOS<br>
+                    Inserção das cargas
+                </div>
+                <div class="flowchart-note">
+                    Eletrodos metálicos (positivo e negativo) são colocados na solução em diferentes posições
+                </div>
+                
+                <div class="flowchart-arrow">↓</div>
+                
+                <div class="flowchart-box process">
+                    🔋 APLICAÇÃO DE TENSÃO<br>
+                    Diferença de potencial (ddp)
+                </div>
+                <div class="flowchart-note">
+                    Fonte de tensão conectada aos eletrodos cria campo elétrico na solução
+                </div>
+                
+                <div class="flowchart-arrow">↓</div>
+                
+                <div class="flowchart-box process">
+                    ⚡ CAMPO ELÉTRICO<br>
+                    Distribuição espacial
+                </div>
+                <div class="flowchart-note">
+                    O campo elétrico se espalha pela cuba de acordo com V = k·Σ(q/r)
+                </div>
+                
+                <div class="flowchart-arrow">↓</div>
+                
+                <div class="flowchart-box process">
+                    📍 SONDA DE MEDIÇÃO<br>
+                    Mapeamento do potencial
+                </div>
+                <div class="flowchart-note">
+                    Ponta de prova percorre a cuba medindo potencial em vários pontos
+                </div>
+                
+                <div class="flowchart-arrow">↓</div>
+                
+                <div class="flowchart-box output">
+                    📐 LINHAS EQUIPOTENCIAIS<br>
+                    Conexão de pontos
+                </div>
+                <div class="flowchart-note">
+                    Pontos com mesmo potencial são conectados formando linhas equipotenciais
+                </div>
+                
+                <div class="flowchart-arrow">↓</div>
+                
+                <div class="flowchart-box output">
+                    📊 ANÁLISE<br>
+                    Visualização do campo
+                </div>
+                <div class="flowchart-note">
+                    • Linhas próximas = campo intenso<br>
+                    • Linhas espaçadas = campo fraco<br>
+                    • Perpendiculares às linhas de campo
+                </div>
+                
+                <div class="flowchart-arrow">↓</div>
+                
+                <div class="flowchart-box" style="background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%);">
+                    🎓 CONCLUSÃO<br>
+                    Comportamento eletrostático
+                </div>
+                <div class="flowchart-note">
+                    Demonstra como cargas criam campos elétricos no espaço e como medi-los experimentalmente
+                </div>
+            </div>
+        </div>
+        
+        <!-- CONTROLES ABAIXO (LARGURA TOTAL) -->
+        <div class="controls-container">
+            <div>
+                <h2>⚙️ Controles das Cargas</h2>
+                <div id="chargeControls"></div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="addCharge()">➕ Adicionar Carga</button>
+                    <button class="btn-secondary" onclick="resetSimulation()">🔄 Reset</button>
+                </div>
+            </div>
+            
+            <div>
+                <h2>📊 Legenda</h2>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff4444;"></div>
+                        <span>Carga Positiva (+)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4444ff;"></div>
+                        <span>Carga Negativa (−)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #0000ff);"></div>
+                        <span>Linhas Equipotenciais</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h2>📚 Fundamentos Físicos</h2>
+                <div class="info-box">
+                    <strong>Lei de Coulomb:</strong><br>
+                    V = k·Σ(q/r)<br><br>
+                    <strong>Linhas Equipotenciais:</strong><br>
+                    • Conectam pontos de mesmo potencial<br>
+                    • Perpendiculares ao campo elétrico<br>
+                    • Deformam-se com múltiplas cargas<br><br>
+                    <strong>Interação:</strong><br>
+                    Cargas opostas se atraem, modificando o campo elétrico resultante.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * SIMULAÇÃO DE CUBA ELETROLÍTICA
+         * 
+         * Este código simula o comportamento de cargas elétricas em uma cuba eletrolítica,
+         * calculando e visualizando as linhas equipotenciais resultantes.
+         * 
+         * ESTRUTURA DE DADOS:
+         * - charges: array de objetos {x, y, q, dragging}
+         *   x, y: posição da carga (pixels)
+         *   q: magnitude da carga (coulombs, escalado)
+         *   dragging: booleano indicando se está sendo arrastada
+         */
+        
+        let charges = [];
+        let selectedCharge = null;
+        let canvasWidth = 700;
+        let canvasHeight = 500;
+        const K = 8.99e9; // Constante de Coulomb (simplificada para visualização)
+        
+        /**
+         * SETUP - Inicialização do p5.js
+         * Configura o canvas e cria cargas iniciais
+         */
+        function setup() {
+            let canvas = createCanvas(canvasWidth, canvasHeight);
+            canvas.parent('canvasContainer');
+            canvas.id('simulationCanvas');
+            
+            // Inicializa com duas cargas: uma positiva e uma negativa
+            charges.push({
+                x: 200,
+                y: 250,
+                q: 5, // Carga positiva
+                dragging: false
+            });
+            
+            charges.push({
+                x: 500,
+                y: 250,
+                q: -5, // Carga negativa
+                dragging: false
+            });
+            
+            updateChargeControls();
+        }
+        
+        /**
+         * DRAW - Loop principal de renderização
+         * Executado 60 vezes por segundo
+         */
+        function draw() {
+            // Fundo branco
+            background(255);
+            
+            // 1º PASSO: Desenhar o mapa de potencial (cores de fundo)
+            drawPotentialField();
+            
+            // 2º PASSO: Desenhar linhas equipotenciais
+            drawEquipotentialLines();
+            
+            // 3º PASSO: Desenhar as cargas
+            drawCharges();
+            
+            // 4º PASSO: Desenhar informações adicionais
+            drawGrid();
+        }
+        
+        /**
+         * CÁLCULO DO POTENCIAL ELÉTRICO
+         * 
+         * Fórmula: V(r) = k * Σ(qi/ri)
+         * Onde:
+         * - k é a constante de Coulomb
+         * - qi é a carga i
+         * - ri é a distância do ponto à carga i
+         * 
+         * @param {number} x - coordenada x do ponto
+         * @param {number} y - coordenada y do ponto
+         * @returns {number} - potencial elétrico no ponto (x,y)
+         */
+        function calculatePotential(x, y) {
+            let potential = 0;
+            
+            // Soma a contribuição de cada carga
+            for (let charge of charges) {
+                // Calcula distância euclidiana
+                let dx = x - charge.x;
+                let dy = y - charge.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Evita divisão por zero (quando muito próximo da carga)
+                if (distance < 5) distance = 5;
+                
+                // V = k*q/r (simplificado, k=1 para visualização)
+                potential += charge.q / distance;
+            }
+            
+            return potential;
+        }
+        
+        /**
+         * DESENHA CAMPO DE POTENCIAL
+         * 
+         * Cria um mapa de cores representando o potencial em cada ponto.
+         * Vermelho = potencial alto (positivo)
+         * Azul = potencial baixo (negativo)
+         */
+        function drawPotentialField() {
+            let resolution = 10; // Pixels entre cada cálculo (performance)
+            
+            for (let x = 0; x < canvasWidth; x += resolution) {
+                for (let y = 0; y < canvasHeight; y += resolution) {
+                    let V = calculatePotential(x, y);
+                    
+                    // Mapeia potencial para cor
+                    // Normaliza o valor para o intervalo [-1, 1]
+                    let normalizedV = Math.tanh(V / 2);
+                    
+                    // Converte para RGB
+                    let r, g, b;
+                    if (normalizedV > 0) {
+                        // Potencial positivo: branco -> vermelho
+                        r = 255;
+                        g = 255 * (1 - normalizedV * 0.5);
+                        b = 255 * (1 - normalizedV * 0.5);
+                    } else {
+                        // Potencial negativo: branco -> azul
+                        r = 255 * (1 + normalizedV * 0.5);
+                        g = 255 * (1 + normalizedV * 0.5);
+                        b = 255;
+                    }
+                    
+                    noStroke();
+                    fill(r, g, b, 100); // Alpha baixo para transparência
+                    rect(x, y, resolution, resolution);
+                }
+            }
+        }
+        
+        /**
+         * DESENHA LINHAS EQUIPOTENCIAIS
+         * 
+         * Linhas equipotenciais são curvas que conectam pontos de mesmo potencial.
+         * Usa algoritmo de contorno para traçar as linhas.
+         * As linhas se deformam de acordo com a presença de TODAS as cargas.
+         */
+        function drawEquipotentialLines() {
+            // Define níveis de potencial para desenhar - MUITO MAIS níveis
+            let levels = [];
+            for (let i = -2.0; i <= 2.0; i += 0.05) {
+                levels.push(i);
+            }
+            
+            strokeWeight(2.5); // Linhas grossas
+            
+            // Para cada nível de potencial
+            for (let level of levels) {
+                // Cor baseada no nível com maior contraste
+                let hue = map(level, -2.0, 2.0, 240, 0); // Azul para vermelho
+                let sat = 180;
+                let bright = 200;
+                
+                // Alpha varia para dar profundidade
+                let alpha = map(Math.abs(level), 0, 2, 255, 100);
+                
+                colorMode(HSB);
+                stroke(hue, sat, bright, alpha);
+                colorMode(RGB);
+                noFill();
+                
+                // Algoritmo de contorno - resolução ALTA para capturar deformações
+                let resolution = 5; // Resolução muito fina!
+                
+                for (let x = 0; x < canvasWidth - resolution; x += resolution) {
+                    for (let y = 0; y < canvasHeight - resolution; y += resolution) {
+                        // Calcula potencial nos 4 cantos da célula
+                        let v1 = Math.tanh(calculatePotential(x, y) / 2);
+                        let v2 = Math.tanh(calculatePotential(x + resolution, y) / 2);
+                        let v3 = Math.tanh(calculatePotential(x + resolution, y + resolution) / 2);
+                        let v4 = Math.tanh(calculatePotential(x, y + resolution) / 2);
+                        
+                        // Verifica se o nível cruza esta célula
+                        let min = Math.min(v1, v2, v3, v4);
+                        let max = Math.max(v1, v2, v3, v4);
+                        
+                        if (level >= min && level <= max) {
+                            // Desenha segmento de linha nesta célula
+                            drawContourSegment(x, y, resolution, level, v1, v2, v3, v4);
+                        }
+                    }
+                }
+            }
+        }
+        
+        /**
+         * DESENHA SEGMENTO DE CONTORNO
+         * 
+         * Usa interpolação linear para encontrar pontos onde a linha equipotencial
+         * cruza os lados da célula.
+         */
+        function drawContourSegment(x, y, res, level, v1, v2, v3, v4) {
+            let points = [];
+            
+            // Verifica cada lado da célula
+            // Lado superior
+            if ((v1 - level) * (v2 - level) < 0) {
+                let t = (level - v1) / (v2 - v1);
+                points.push({x: x + t * res, y: y});
+            }
+            
+            // Lado direito
+            if ((v2 - level) * (v3 - level) < 0) {
+                let t = (level - v2) / (v3 - v2);
+                points.push({x: x + res, y: y + t * res});
+            }
+            
+            // Lado inferior
+            if ((v3 - level) * (v4 - level) < 0) {
+                let t = (level - v4) / (v3 - v4);
+                points.push({x: x + t * res, y: y + res});
+            }
+            
+            // Lado esquerdo
+            if ((v4 - level) * (v1 - level) < 0) {
+                let t = (level - v1) / (v4 - v1);
+                points.push({x: x, y: y + t * res});
+            }
+            
+            // Conecta os pontos
+            if (points.length === 2) {
+                line(points[0].x, points[0].y, points[1].x, points[1].y);
+            }
+        }
+        
+        /**
+         * DESENHA AS CARGAS ELÉTRICAS
+         * 
+         * Cargas positivas: círculos vermelhos com sinal +
+         * Cargas negativas: círculos azuis com sinal -
+         */
+        function drawCharges() {
+            for (let i = 0; i < charges.length; i++) {
+                let charge = charges[i];
+                
+                // Tamanho proporcional à magnitude da carga
+                let size = map(Math.abs(charge.q), 0, 10, 20, 50);
+                
+                // Cor baseada no sinal
+                if (charge.q > 0) {
+                    fill(255, 50, 50); // Vermelho para positiva
+                    stroke(200, 0, 0);
+                } else {
+                    fill(50, 50, 255); // Azul para negativa
+                    stroke(0, 0, 200);
+                }
+                
+                strokeWeight(3);
+                
+                // Destaque se estiver sendo arrastada
+                if (charge.dragging) {
+                    strokeWeight(5);
+                    stroke(255, 200, 0);
+                }
+                
+                // Desenha círculo
+                ellipse(charge.x, charge.y, size, size);
+                
+                // Desenha sinal + ou -
+                fill(255);
+                noStroke();
+                textAlign(CENTER, CENTER);
+                textSize(size * 0.5);
+                textStyle(BOLD);
+                text(charge.q > 0 ? '+' : '−', charge.x, charge.y);
+                
+                // Desenha valor da carga
+                fill(0);
+                textSize(12);
+                text(charge.q.toFixed(1) + ' C', charge.x, charge.y + size/2 + 15);
+            }
+        }
+        
+        /**
+         * DESENHA GRADE DE REFERÊNCIA
+         */
+        function drawGrid() {
+            stroke(200, 200, 200, 100);
+            strokeWeight(1);
+            
+            // Linhas verticais
+            for (let x = 0; x < canvasWidth; x += 50) {
+                line(x, 0, x, canvasHeight);
+            }
+            
+            // Linhas horizontais
+            for (let y = 0; y < canvasHeight; y += 50) {
+                line(0, y, canvasWidth, y);
+            }
+        }
+        
+        /**
+         * INTERAÇÃO COM MOUSE - Pressionar
+         * 
+         * Detecta se o usuário clicou em uma carga para arrastá-la
+         */
+        function mousePressed() {
+            for (let charge of charges) {
+                let d = dist(mouseX, mouseY, charge.x, charge.y);
+                let size = map(Math.abs(charge.q), 0, 10, 20, 50);
+                
+                if (d < size / 2) {
+                    charge.dragging = true;
+                    selectedCharge = charge;
+                    return;
+                }
+            }
+        }
+        
+        /**
+         * INTERAÇÃO COM MOUSE - Arrastar
+         * 
+         * Atualiza a posição da carga enquanto é arrastada
+         */
+        function mouseDragged() {
+            if (selectedCharge) {
+                selectedCharge.x = constrain(mouseX, 0, canvasWidth);
+                selectedCharge.y = constrain(mouseY, 0, canvasHeight);
+            }
+        }
+        
+        /**
+         * INTERAÇÃO COM MOUSE - Soltar
+         */
+        function mouseReleased() {
+            if (selectedCharge) {
+                selectedCharge.dragging = false;
+                selectedCharge = null;
+            }
+        }
+        
+        /**
+         * ATUALIZA CONTROLES DA INTERFACE
+         * 
+         * Cria sliders para cada carga na interface
+         */
+        function updateChargeControls() {
+            let container = document.getElementById('chargeControls');
+            container.innerHTML = '';
+            
+            charges.forEach((charge, index) => {
+                let controlDiv = document.createElement('div');
+                controlDiv.className = 'charge-control';
+                
+                controlDiv.innerHTML = `
+                    <div class="charge-header">
+                        <span class="charge-label">Carga ${index + 1}</span>
+                        <span class="charge-value" id="value-${index}">${charge.q.toFixed(1)} C</span>
+                    </div>
+                    <input 
+                        type="range" 
+                        min="-10" 
+                        max="10" 
+                        step="0.5" 
+                        value="${charge.q}"
+                        oninput="updateCharge(${index}, this.value)"
+                    >
+                    <button 
+                        class="btn-secondary" 
+                        style="margin-top: 8px; width: 100%;"
+                        onclick="removeCharge(${index})"
+                    >
+                        🗑️ Remover
+                    </button>
+                `;
+                
+                container.appendChild(controlDiv);
+            });
+        }
+        
+        /**
+         * ATUALIZA VALOR DE UMA CARGA
+         */
+        function updateCharge(index, value) {
+            charges[index].q = parseFloat(value);
+            document.getElementById(`value-${index}`).textContent = parseFloat(value).toFixed(1) + ' C';
+        }
+        
+        /**
+         * ADICIONA NOVA CARGA
+         */
+        function addCharge() {
+            if (charges.length < 6) {
+                charges.push({
+                    x: Math.random() * canvasWidth,
+                    y: Math.random() * canvasHeight,
+                    q: Math.random() * 10 - 5,
+                    dragging: false
+                });
+                updateChargeControls();
+            } else {
+                alert('Máximo de 6 cargas permitido para manter a performance!');
+            }
+        }
+        
+        /**
+         * REMOVE UMA CARGA
+         */
+        function removeCharge(index) {
+            if (charges.length > 1) {
+                charges.splice(index, 1);
+                updateChargeControls();
+            } else {
+                alert('Precisa haver pelo menos uma carga!');
+            }
+        }
+        
+        /**
+         * RESETA A SIMULAÇÃO
+         */
+        function resetSimulation() {
+            charges = [
+                {x: 200, y: 250, q: 5, dragging: false},
+                {x: 500, y: 250, q: -5, dragging: false}
+            ];
+            updateChargeControls();
+        }
+    </script>
+</body>
+</html>
